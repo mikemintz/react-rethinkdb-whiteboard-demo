@@ -17,7 +17,9 @@ export const AuthWrapper = React.createClass({
   },
 
   connect(username, password) {
-    const path = '/api';
+    const path = '/api'
+               + '?username=' + encodeURIComponent(username)
+               + '&password=' + encodeURIComponent(password);
     RR.DefaultSession.connect({
       host: 'localhost',
       port: 8015,
