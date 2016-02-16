@@ -1,6 +1,20 @@
 import React from 'react';
+import RR from 'react-rethinkdb';
+const r = RR.r;
 
 export const Whiteboard = React.createClass({
+  mixins: [RR.DefaultMixin],
+
+  observe(props, state) {
+    return {
+      lines: new RR.QueryRequest({
+        query: r.table('lines').filter({boardId: props.boardId}),
+        changes: true,
+        initial: [],
+      }),
+    };
+  },
+
   getInitialState() {
     return {
       point1: null,
@@ -32,13 +46,12 @@ export const Whiteboard = React.createClass({
   mouseUp(event) {
     if (this.state.point1 && this.state.point2) {
       const line = {
-        id: Math.random().toString(),
         boardId: this.props.boardId,
         username: this.props.username,
         x1: this.state.point1.x, y1: this.state.point1.y,
         x2: this.state.point2.x, y2: this.state.point2.y,
       };
-      this.props.onCreateLine(line);
+      RR.DefaultSession.runQuery(r.table('lines').insert(line));
       this.setState({point1: null, point2: null});
     }
   },
@@ -51,7 +64,7 @@ export const Whiteboard = React.createClass({
 
   clickLine(line) {
     if (!this.state.point1) {
-      this.props.onDeleteLine(line.id);
+      RR.DefaultSession.runQuery(r.table('lines').get(line.id).delete());
     }
   },
 
@@ -64,7 +77,7 @@ export const Whiteboard = React.createClass({
         onMouseUp={this.mouseUp}
         onMouseMove={this.mouseMove}
       >
-        {this.props.lines.map(line => (
+        {this.data.lines.value().map(line => (
           <line
             key={line.id}
             x1={line.x1} y1={line.y1}

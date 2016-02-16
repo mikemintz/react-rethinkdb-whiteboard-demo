@@ -1,4 +1,5 @@
 import React from 'react';
+import RR from 'react-rethinkdb';
 import {WhiteboardList} from './WhiteboardList.jsx';
 
 export const AuthWrapper = React.createClass({
@@ -9,6 +10,22 @@ export const AuthWrapper = React.createClass({
     };
   },
 
+  componentWillMount() {
+    if (this.state.username) {
+      this.connect(this.state.username, this.state.password);
+    }
+  },
+
+  connect(username, password) {
+    const path = '/api';
+    RR.DefaultSession.connect({
+      host: 'localhost',
+      port: 8015,
+      path: path,
+      db: 'test',
+    });
+  },
+
   handleLogin(event) {
     event.preventDefault();
     const username = this.refs.username.value;
@@ -16,9 +33,11 @@ export const AuthWrapper = React.createClass({
     window.localStorage.setItem('username', username);
     window.localStorage.setItem('password', password);
     this.setState({username, password});
+    this.connect(username, password);
   },
 
   handleLogout() {
+    RR.DefaultSession.close();
     this.setState({username: null, password: null});
     window.localStorage.removeItem('username');
     window.localStorage.removeItem('password');
